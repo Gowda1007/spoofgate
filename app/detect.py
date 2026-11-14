@@ -1,8 +1,12 @@
+import os
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 import threading
 from dataclasses import dataclass
 from typing import Optional
 
 import cv2
+cv2.setNumThreads(1)
 import numpy as np
 
 from . import config

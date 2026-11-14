@@ -2,7 +2,7 @@
 
 Open-source, CPU-only presentation attack detection (PAD) and biometric identity verification system for unattended HID entry kiosks.
 
-Compliant with **ISO/IEC 30107-3 Level 1 & Level 2**, integrating **Context-Aware Schedule Policies** and an **Offline Fail-Safe Gate** (never fails open, zero raw biometrics stored).
+Compliant with **evaluated using ISO/IEC 30107-3 metrics (APCER/BPCER)**, integrating **Context-Aware Schedule Policies** and an **Offline Fail-Safe Gate** (never fails open, zero raw biometrics stored).
 
 ---
 

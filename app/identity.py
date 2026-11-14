@@ -1,12 +1,27 @@
 import json
+import os
 import secrets
 import threading
+from pathlib import Path
 
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 import cv2
+cv2.setNumThreads(1)
 import numpy as np
 
 from . import config
 from .detect import crop_box
+
+
+def _atomic_json_dump(data, filepath: Path):
+    """Atomic write via tmp file + os.fsync() + os.replace() to guarantee zero corruption on power loss."""
+    tmp_path = filepath.parent / f"{filepath.name}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp_path, filepath)
 
 
 class Embedder:
@@ -45,8 +60,9 @@ class IdentityStore:
 
     def __init__(self):
         config.STORE_DIR.mkdir(parents=True, exist_ok=True)
+        config.KEYS_DIR.mkdir(parents=True, exist_ok=True)
         self.tpl_path = config.STORE_DIR / "templates.json"
-        self.key_path = config.STORE_DIR / "keys.json"
+        self.key_path = config.KEYS_DIR / "keys.json"
         self.lock = threading.Lock()
         self.tpl = self._load(self.tpl_path)
         self.keys = self._load(self.key_path)
@@ -73,15 +89,15 @@ class IdentityStore:
         with self.lock:
             self.keys[user_id] = seed
             self.tpl[user_id] = (self._q(seed) @ e).tolist()
-            self.tpl_path.write_text(json.dumps(self.tpl))
-            self.key_path.write_text(json.dumps(self.keys))
+            _atomic_json_dump(self.tpl, self.tpl_path)
+            _atomic_json_dump(self.keys, self.key_path)
 
     def revoke(self, user_id):
         with self.lock:
             self.tpl.pop(user_id, None)
             self.keys.pop(user_id, None)
-            self.tpl_path.write_text(json.dumps(self.tpl))
-            self.key_path.write_text(json.dumps(self.keys))
+            _atomic_json_dump(self.tpl, self.tpl_path)
+            _atomic_json_dump(self.keys, self.key_path)
 
     def identify(self, emb, claimed_id=None):
         """Returns (user_id or None, cosine similarity). 1:1 if claimed_id else 1:N."""

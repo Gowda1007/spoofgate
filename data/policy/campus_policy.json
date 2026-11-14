@@ -8,7 +8,7 @@
         "start": "08:00",
         "end": "18:00"
       },
-      "offline_pass_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "offline_pass_hash": "68197d8ddd446ed24b26a06da8c7d1e411b5dcdaf324de0ed4e6af1bb9dd9099",
       "status": "ACTIVE"
     },
     "vishal": {
@@ -19,7 +19,29 @@
         "start": "00:00",
         "end": "23:59"
       },
-      "offline_pass_hash": "c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a",
+      "offline_pass_hash": "731e5c795ba6c0cb67e728fa030a9484b745d1ecdbb29e01cb831af3bd3ee69b",
+      "status": "ACTIVE"
+    },
+    "chinmay": {
+      "role": "researcher",
+      "department": "Artificial Intelligence",
+      "allowed_zones": ["campus_gate", "lab_cse"],
+      "schedule": {
+        "start": "07:00",
+        "end": "21:00"
+      },
+      "offline_pass_hash": "63b431c69d9863b8264dcd076513519880aa13e683580922db4e47de181ac8de",
+      "status": "ACTIVE"
+    },
+    "abhilash": {
+      "role": "admin",
+      "department": "Campus Security & IT",
+      "allowed_zones": ["campus_gate", "lab_cse", "server_room"],
+      "schedule": {
+        "start": "00:00",
+        "end": "23:59"
+      },
+      "offline_pass_hash": "c3bb5b979a80af79072e9426850390aaaff51737f45673fe860cc2cfad3d594f",
       "status": "ACTIVE"
     }
   },
