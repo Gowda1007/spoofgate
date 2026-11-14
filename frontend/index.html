@@ -3,255 +3,114 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SpoofGate · HID Entry Kiosk</title>
+  <title>SpoofGate kiosk</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <!-- ============ HEADER ============ -->
-  <header class="top">
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div>
-        <h1>SpoofGate</h1>
-        <p class="sub">HID entry kiosk · liveness + identity + access policy</p>
-      </div>
-    </div>
-    <div class="pills" id="pills">
-      <span class="pill" id="pill-engine"><i></i><b>Engine</b><span>checking…</span></span>
-      <span class="pill" id="pill-model"><i></i><b>Liveness model</b><span>…</span></span>
-      <span class="pill" id="pill-link"><i></i><b>Central link</b><span>online</span></span>
-      <span class="pill" id="pill-clock"><i></i><b>Clock</b><span>live</span></span>
-      <span class="pill sla"><b>Target</b><span>decision &lt; 2.0 s</span></span>
-      <button class="btn small ghost" id="btn-admin" type="button">Admin</button>
-    </div>
+<body class="theme-kiosk">
+  <header class="bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <strong>SpoofGate</strong>
+      <span id="where">Main campus gate</span>
+    </a>
+    <nav class="nav" aria-label="Dashboards">
+      <a href="index.html" aria-current="page">Kiosk</a>
+      <a href="admin.html">Institution</a>
+      <a href="redteam.html">Red team</a>
+    </nav>
+    <span class="dot" id="engine-dot">Connecting</span>
   </header>
 
-  <!-- ============ OFFLINE BANNER ============ -->
-  <div class="offline-banner" id="offline-banner" hidden>
-    <div>
-      <strong>OFFLINE · SAFE LOCAL MODE</strong>
-      <span>Central service unreachable. Decisions run on this kiosk with stricter rules and never fail open.</span>
-    </div>
-    <ul>
-      <li>Auto-entry only if liveness ≥ <b id="r-live">0.85</b> and match ≥ <b id="r-sim">0.45</b></li>
-      <li>Liveness doubt → local head-turn fallback</li>
-      <li>Identity or schedule doubt → no entry, security desk</li>
-      <li>Restricted zones stay closed</li>
-    </ul>
-  </div>
-
-  <!-- ============ CONTROL BAR ============ -->
-  <section class="controls" aria-label="Kiosk context">
-    <label class="ctl">
-      <span>Access zone</span>
+  <section class="settings" aria-label="Demo settings">
+    <span class="label">Demo settings</span>
+    <label class="field">Entrance
       <select id="zone">
-        <option value="campus_gate">Main Campus Gate · 24/7</option>
-        <option value="lab_cse">AI Lab (CSE) · scheduled</option>
-        <option value="server_room">Server Room · faculty only</option>
+        <option value="campus_gate">Main campus gate (open 24/7)</option>
+        <option value="lab_cse">AI Lab (CSE), scheduled hours</option>
+        <option value="server_room">Server room, faculty only</option>
       </select>
     </label>
-    <div class="ctl">
-      <span>Campus time</span>
-      <div class="seg" role="group" aria-label="Clock mode">
-        <button type="button" class="on" data-time="">Live clock</button>
-        <button type="button" data-time="11:30">Day 11:30</button>
-        <button type="button" data-time="23:15">Night 23:15</button>
-        <input type="time" id="time-custom" aria-label="Custom demo time">
+    <div class="field">Time used for access rules
+      <div class="seg" role="group" aria-label="Clock">
+        <button type="button" data-time="" aria-pressed="true">Real time</button>
+        <button type="button" data-time="11:30" aria-pressed="false">11:30</button>
+        <button type="button" data-time="23:15" aria-pressed="false">23:15</button>
+        <input type="time" id="time-custom" aria-label="Other time">
       </div>
     </div>
-    <label class="ctl">
-      <span>Claimed ID <em>(optional, 1:1)</em></span>
-      <input id="claimed" type="text" placeholder="blank = search all" autocomplete="off" spellcheck="false">
-    </label>
-    <label class="ctl">
-      <span>Test label <em>(scoring only, never affects decision)</em></span>
-      <select id="label">
-        <option value="">— not labelled —</option>
-        <option value="genuine">Genuine live person</option>
-        <option value="print">Printed photo</option>
-        <option value="screen_photo">Screen photo</option>
-        <option value="video_replay">Video replay</option>
-        <option value="mask">Mask</option>
-      </select>
-    </label>
-    <div class="ctl">
-      <span>Network</span>
-      <label class="switch">
-        <input type="checkbox" id="offline-toggle">
-        <i></i><b id="offline-text">Simulate central link loss</b>
-      </label>
+    <div class="field">Connection to central service
+      <label class="switch"><input type="checkbox" id="offline"><i></i><span id="offline-label">Connected</span></label>
     </div>
+    <div class="setup" id="setup" aria-live="polite"></div>
   </section>
 
-  <!-- ============ MAIN ============ -->
-  <main class="grid">
-    <!-- LEFT: camera -->
-    <section class="card cam-card">
-      <div class="card-head">
-        <h2>Camera</h2>
-        <span class="muted small" id="cam-meta">starting…</span>
-      </div>
-      <div class="cam" id="cam">
-        <video id="video" playsinline muted autoplay></video>
-        <div class="guide" aria-hidden="true"></div>
-        <div class="flash" id="flash"></div>
-        <div class="cam-badge" id="cam-badge" hidden>LOCAL EDGE MODE</div>
-        <div class="cam-msg" id="cam-msg" hidden>
-          <strong id="cam-msg-title">Camera unavailable</strong>
-          <span id="cam-msg-text"></span>
-          <button class="btn small" id="cam-retry" type="button">Retry camera</button>
-        </div>
-      </div>
-      <button class="btn primary big" id="btn-verify" type="button">
-        <span id="verify-text">Verify entry</span><kbd>Space</kbd>
-      </button>
-      <p class="muted small center">Captures 6 frames in ~0.4 s. No images are stored.</p>
+  <div class="offline-note" id="offline-note" hidden>
+    <span><b>Offline safe mode.</b> This kiosk decides on its own with stricter rules. Restricted areas stay locked and doubtful cases go to the security desk.</span>
+    <span id="offline-rule-text" class="small"></span>
+  </div>
 
-      <!-- Step-up panel -->
-      <div class="step" id="step" hidden>
-        <h3 id="step-title">Extra check</h3>
-        <p id="step-text" class="muted"></p>
-        <div id="step-otp" hidden>
-          <div class="otp-row">
-            <input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code">
-            <button class="btn primary" id="btn-otp" type="button">Verify code</button>
+  <main class="kiosk">
+    <section class="reader" aria-label="Camera">
+      <div class="lens" id="lens">
+        <div class="feed">
+          <video id="video" playsinline muted autoplay></video>
+          <div class="oval" aria-hidden="true"></div>
+          <div class="shutter" id="shutter"></div>
+          <span class="edge" id="edge" hidden>Working offline</span>
+          <div class="over" id="cam-over" hidden>
+            <h3>Camera unavailable</h3>
+            <p id="cam-error"></p>
+            <button class="btn" id="cam-retry" type="button">Try the camera again</button>
           </div>
-          <button class="link" id="btn-otp-demo" type="button">Demo: show code sent to registered phone</button>
-          <span class="mono" id="otp-demo"></span>
         </div>
-        <div id="step-action" hidden>
-          <button class="btn primary" id="btn-action" type="button">Start head-turn check</button>
-        </div>
-        <div id="step-recapture" hidden>
-          <button class="btn primary" id="btn-recapture" type="button">Try again</button>
-        </div>
-        <p class="err small" id="step-err"></p>
       </div>
+      <button class="btn primary go" id="go" type="button" disabled><span id="go-text">Starting camera</span><kbd>Space</kbd></button>
+      <p class="hint">Look into the oval and press Verify. It takes about half a second and no photo is kept.</p>
     </section>
 
-    <!-- RIGHT: decision + telemetry -->
-    <section class="right">
-      <div class="hero idle" id="hero" aria-live="polite">
-        <div class="hero-main">
-          <div class="hero-icon" id="hero-icon" aria-hidden="true"></div>
-          <div>
-            <div class="hero-kicker" id="hero-kicker">READY</div>
-            <div class="hero-title" id="hero-title">Step into the frame</div>
-            <div class="hero-sub" id="hero-sub">Press Verify entry or Space</div>
-          </div>
-        </div>
-        <div class="hero-side">
-          <div class="watch" id="watch">— ms</div>
-          <div class="muted small">click → decision</div>
-          <code class="small" id="hero-code"></code>
-        </div>
+    <section class="result" aria-live="polite">
+      <div class="verdict" id="verdict">
+        <div class="state" id="v-state">Ready</div>
+        <h1 id="v-title">Look at the camera</h1>
+        <p class="why" id="v-why">Press Verify to check in.</p>
       </div>
 
-      <ol class="trace" id="trace" aria-label="Decision pipeline">
-        <li data-k="capture"><i></i>Capture</li>
-        <li data-k="quality"><i></i>Quality</li>
-        <li data-k="liveness"><i></i>Liveness</li>
-        <li data-k="identity"><i></i>Identity</li>
-        <li data-k="policy"><i></i>Access policy</li>
-        <li data-k="offline"><i></i>Offline rules</li>
-        <li data-k="decision"><i></i>Decision</li>
+      <div class="next" id="next" hidden>
+        <h3 id="n-title"></h3>
+        <p class="muted" id="n-text"></p>
+        <div class="row" id="n-actions"></div>
+        <div class="row" id="n-code" hidden>
+          <input class="otp" id="code" inputmode="numeric" maxlength="6" placeholder="······" autocomplete="one-time-code" aria-label="6-digit approval code">
+          <button class="btn primary" id="code-go" type="button">Confirm code</button>
+        </div>
+        <div class="wait" id="n-wait" hidden><span class="spinner" aria-hidden="true"></span><span id="n-wait-text"></span></div>
+        <p class="err" id="n-err"></p>
+      </div>
+
+      <ol class="checks" id="checks" aria-label="What was checked">
+        <li data-k="quality"><span class="ic"></span><span class="what">Face is clear</span><span class="val"></span></li>
+        <li data-k="liveness"><span class="ic"></span><span class="what">Real person, not a photo or screen</span><span class="val"></span></li>
+        <li data-k="identity"><span class="ic"></span><span class="what">Recognised</span><span class="val"></span></li>
+        <li data-k="policy"><span class="ic"></span><span class="what">Allowed here at this time</span><span class="val"></span></li>
+        <li data-k="offline" hidden><span class="ic"></span><span class="what">Offline safety rules</span><span class="val"></span></li>
+        <li data-k="approval" hidden><span class="ic"></span><span class="what">HR / Security approval</span><span class="val"></span></li>
       </ol>
 
-      <div class="bento">
-        <div class="card tile">
-          <div class="tile-head"><h3>Latency</h3><span class="chip" id="lat-chip">—</span></div>
-          <div class="big-num" id="lat-total">—</div>
-          <div class="sla-bar"><div id="sla-fill"></div><span class="sla-mark" title="2 s limit"></span></div>
-          <dl class="kv" id="lat-break"></dl>
-        </div>
-        <div class="card tile">
-          <div class="tile-head"><h3>Liveness</h3><span class="chip" id="live-chip">—</span></div>
-          <div class="big-num" id="live-val">—</div>
-          <div class="meter" id="live-meter"><div class="fill"></div><span class="mk a"></span><span class="mk b"></span></div>
-          <p class="muted small" id="live-note">Deny below — · allow above —</p>
-        </div>
-        <div class="card tile">
-          <div class="tile-head"><h3>Identity</h3><span class="chip" id="id-chip">—</span></div>
-          <div class="big-num" id="id-user">—</div>
-          <div class="meter" id="id-meter"><div class="fill"></div><span class="mk a"></span><span class="mk b"></span></div>
-          <p class="muted small" id="id-note">Cosine similarity of cancelable templates</p>
-        </div>
-        <div class="card tile">
-          <div class="tile-head"><h3>Access policy</h3><span class="chip" id="pol-chip">—</span></div>
-          <div class="big-num small-num" id="pol-zone">—</div>
-          <dl class="kv" id="pol-kv"></dl>
-        </div>
+      <div class="timing" id="timing">
+        <span class="muted">Decided in</span>
+        <span class="track" aria-hidden="true"><i id="t-fill"></i></span>
+        <strong id="t-total">–</strong>
+        <span class="parts" id="t-parts">Target: under 2 seconds from pressing Verify.</span>
+      </div>
+
+      <div class="queue" id="queue" hidden>
+        <span><b id="q-count">0</b> offline decisions saved on this kiosk, waiting to sync. Only time, place, result and scores are kept.</span>
+        <button class="btn sm" id="sync" type="button">Sync now</button>
       </div>
     </section>
   </main>
 
-  <!-- ============ BOTTOM ============ -->
-  <section class="bottom">
-    <div class="card">
-      <div class="card-head">
-        <h2>Red-team scorecard <span class="muted small">(live labelled attempts, from /api/stats)</span></h2>
-        <button class="btn small ghost" id="btn-stats" type="button">Refresh</button>
-      </div>
-      <div class="summary" id="summary"></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Scenario</th><th>n</th><th>Allow</th><th>Step-up</th><th>Deny</th><th>Key metric</th><th>Median</th><th>p95</th><th>Status</th></tr>
-          </thead>
-          <tbody id="stats-body"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
-        </table>
-      </div>
-      <p class="muted small">Attack rows: lower "allow" is better. Genuine row: lower "deny" is better. Held-out results from <code>tools.py evaluate</code> are in <code>results/</code>.</p>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <h2>Audit trail</h2>
-        <span class="muted small">no images · no templates</span>
-      </div>
-      <div class="queue" id="queue" hidden>
-        <div>
-          <strong id="queue-count">0</strong> offline decisions waiting to sync
-          <span class="muted small">(stored on this kiosk: id, time, zone, decision, reason, user, scores)</span>
-        </div>
-        <button class="btn small" id="btn-sync" type="button">Sync now</button>
-      </div>
-      <ul class="audit" id="audit"><li class="muted">No decisions yet.</li></ul>
-    </div>
-  </section>
-
-  <!-- ============ ADMIN ============ -->
-  <dialog id="admin">
-    <form method="dialog" class="admin-head">
-      <h2>Admin</h2>
-      <button class="btn small ghost" value="close">Close</button>
-    </form>
-    <section>
-      <h3>Enroll a person</h3>
-      <p class="muted small">Look at the camera. 8 frames are turned into a revocable template; no photo is kept. Add the user to <code>data/policy/campus_policy.json</code> to give them zone access.</p>
-      <div class="otp-row">
-        <input id="enroll-id" placeholder="user id (a-z, 0-9, -)" autocomplete="off" spellcheck="false">
-        <button class="btn primary" id="btn-enroll" type="button">Capture &amp; enroll</button>
-      </div>
-      <p class="small" id="enroll-msg"></p>
-    </section>
-    <section>
-      <h3>Revoke a template</h3>
-      <div class="otp-row">
-        <select id="revoke-id"></select>
-        <button class="btn danger" id="btn-revoke" type="button">Revoke</button>
-      </div>
-      <p class="small" id="revoke-msg"></p>
-    </section>
-    <section>
-      <h3>Engine health</h3>
-      <dl class="kv" id="health-kv"></dl>
-    </section>
-  </dialog>
-
-  <div class="toast" id="toast" role="status"></div>
-  <script src="app.js"></script>
+  <script src="common.js"></script>
+  <script src="kiosk.js"></script>
 </body>
 </html>
