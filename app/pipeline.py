@@ -190,8 +190,14 @@ class Gate:
                     elif uid is None or sim < config.ID_UNSURE:
                         r = self._resp("DENY", "NO_MATCH", 1 - id_score, p_live=p_live, ident=ident)
                     else:
+                        sess["state"] = "AWAITING_STEP_UP"
+                        sess["created_at"] = time.time()
+                        sess["user_id"] = uid
                         r = self._otp_response(sess, sid, p_live, ident, id_score)
                 else:
+                    sess["state"] = "AWAITING_STEP_UP"
+                    sess["created_at"] = time.time()
+                    sess["user_id"] = uid
                     r = self._resp("REQUEST_VERIFICATION", "LOW_CONFIDENCE", min(p_live, id_score), "ACTION",
                                    p_live=p_live, ident=ident)
                 r["quality"] = a.get("quality")
@@ -212,6 +218,8 @@ class Gate:
     def _otp_response(self, sess, sid, p_live, ident, id_score):
         otp = f"{secrets.randbelow(10 ** 6):06d}"
         sess["otp"], sess["otp_fails"] = otp, 0
+        sess["state"] = "AWAITING_STEP_UP"
+        sess["created_at"] = time.time()
         print(f"[OTP] session {sid}: {otp}   (demo: also at GET /api/otp/{sid})")
         return self._resp("REQUEST_VERIFICATION", "LOW_CONFIDENCE", min(p_live, id_score), "OTP",
                           p_live=p_live, ident=ident)
@@ -219,26 +227,44 @@ class Gate:
     # ------------------------------------------------------------ step-up
     def verify_step(self, session_id, step, otp=None, frames_b64=None, device_id="device"):
         t_start = time.perf_counter()
-        sess = self.sessions.get(session_id)
-        if not sess:
-            raise KeyError("unknown session")
+        now = time.time()
+        with self.lock:
+            sess = self.sessions.get(session_id)
+            if not sess:
+                return self._resp("DENY", "SESSION_EXPIRED_OR_INVALID", 1.0, session_id=session_id)
+            
+            # TASK 2: Enforce 60-second TTL and strictly bind to AWAITING_STEP_UP state
+            if sess.get("state") != "AWAITING_STEP_UP" or (now - sess.get("created_at", now) > 60.0):
+                self.sessions.pop(session_id, None)
+                return self._resp("DENY", "SESSION_EXPIRED_OR_INVALID", 1.0, session_id=session_id)
+            
+            sess["attempts"] = sess.get("attempts", 0) + 1
+
         timings = {}
         if step == "OTP":
             if not sess.get("otp"):
-                raise ValueError("no OTP pending for this session")
+                with self.lock:
+                    self.sessions.pop(session_id, None)
+                return self._resp("DENY", "SESSION_EXPIRED_OR_INVALID", 1.0, session_id=session_id)
+            
             if otp == sess["otp"]:
-                sess["otp"] = None
-                r = self._resp("ALLOW", "OTP_VERIFIED", 0.9)
+                uid = sess.get("user_id")
+                ident = {"matched": True, "user_id": uid, "similarity": 1.0} if uid else None
+                with self.lock:
+                    sess["state"] = "COMPLETED"
+                    sess["otp"] = None
+                r = self._resp("ALLOW", "STEP_UP_VERIFIED", 0.9, ident=ident)
             else:
-                sess["otp_fails"] += 1
-                if sess["otp_fails"] >= 3:
-                    r = self._resp("DENY", "OTP_FAILED", 0.9)
+                if sess["attempts"] >= 3:
+                    with self.lock:
+                        self.sessions.pop(session_id, None)
+                    r = self._resp("DENY", "STEP_UP_MAX_ATTEMPTS_EXCEEDED", 1.0)
                     self._fail(device_id)
                 else:
                     r = self._resp("REQUEST_VERIFICATION", "OTP_WRONG", 0.0, "OTP")
         elif step == "ACTION":
             if not frames_b64:
-                raise ValueError("ACTION needs frames of the user turning their head")
+                return self._resp("REQUEST_VERIFICATION", "LOW_QUALITY", 0.0, "ACTION")
             frames = [decode_frame(s) for s in frames_b64]
             a = self.analyze(frames)
             timings.update(a["timings"])
@@ -251,9 +277,13 @@ class Gate:
                 ident = {"matched": bool(uid and sim >= config.ID_MATCH), "user_id": uid,
                          "similarity": round(sim, 3)}
                 if action_ok and a["p_live"] >= mid and uid and sim >= config.ID_UNSURE:
-                    r = self._resp("ALLOW", "ACTION_VERIFIED", a["p_live"], p_live=a["p_live"], ident=ident)
+                    with self.lock:
+                        sess["state"] = "COMPLETED"
+                    r = self._resp("ALLOW", "STEP_UP_VERIFIED", a["p_live"], p_live=a["p_live"], ident=ident)
                 else:
-                    r = self._resp("DENY", "ACTION_FAILED", 1 - a["p_live"], p_live=a["p_live"], ident=ident)
+                    with self.lock:
+                        self.sessions.pop(session_id, None)
+                    r = self._resp("DENY", "STEP_UP_MAX_ATTEMPTS_EXCEEDED", 1 - a["p_live"], p_live=a["p_live"], ident=ident)
                     self._fail(device_id)
         else:
             raise ValueError("step must be OTP or ACTION")

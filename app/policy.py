@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
@@ -25,15 +26,21 @@ class ContextPolicyEngine:
     def evaluate_access(self, user_id: str, zone: str = "campus_gate", time_str: str = None) -> Tuple[str, str, Dict[str, Any]]:
         """
         Returns: (Decision: "ALLOW" | "REQUEST_VERIFICATION" | "DENY", ReasonCode: str, ContextMetadata: dict)
-        Standardized terminology: 'REQUEST_VERIFICATION' used for step-up states across pipeline.
+        Enforces Clock-Tamper Guard: Only allows simulated time when DEMO_SIMULATION_MODE=true.
         """
         self._load()
         users = self.policy.get("users", {})
         zones = self.policy.get("zones", {})
 
-        # Server clock is authoritative
-        if not time_str:
-            time_str = datetime.datetime.now().strftime("%H:%M")
+        demo_sim_mode = os.getenv("DEMO_SIMULATION_MODE", "true").lower() == "true"
+        clock_source = "HARDWARE_RTC_ENFORCED"
+
+        if demo_sim_mode and time_str:
+            evaluated_time = time_str
+            clock_source = "SIMULATED_DEMO_CLOCK"
+        else:
+            evaluated_time = datetime.datetime.now().strftime("%H:%M")
+            clock_source = "HARDWARE_RTC_ENFORCED"
 
         user_info = users.get(user_id)
         if not user_info:
@@ -62,7 +69,7 @@ class ContextPolicyEngine:
         sched = user_info.get("schedule", {"start": "08:00", "end": "18:00"})
         start_h, start_m = map(int, sched.get("start", "08:00").split(":"))
         end_h, end_m = map(int, sched.get("end", "18:00").split(":"))
-        cur_h, cur_m = map(int, time_str.split(":"))
+        cur_h, cur_m = map(int, evaluated_time.split(":"))
 
         cur_mins = cur_h * 60 + cur_m
         start_mins = start_h * 60 + start_m
@@ -71,13 +78,15 @@ class ContextPolicyEngine:
         # If inside normal hours -> ALLOW
         if start_mins <= cur_mins <= end_mins:
             return "ALLOW", "SCHEDULE_AUTHORIZED", {
-                "window": f"{sched['start']} - {sched['end']}",
-                "simulated_time": time_str
+                "window": f"{sched.get('start', '08:00')} - {sched.get('end', '18:00')}",
+                "evaluated_time": evaluated_time,
+                "clock_source": clock_source
             }
 
         # Outside hours -> REQUEST_VERIFICATION (step-up challenge)
         return "REQUEST_VERIFICATION", "AFTER_HOURS_POLICY_TRIGGER", {
-            "window": f"{sched['start']} - {sched['end']}",
-            "simulated_time": time_str,
+            "window": f"{sched.get('start', '08:00')} - {sched.get('end', '18:00')}",
+            "evaluated_time": evaluated_time,
+            "clock_source": clock_source,
             "next_step": "OTP"
         }

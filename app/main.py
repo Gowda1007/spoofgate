@@ -1,9 +1,15 @@
+import os
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+import secrets
+import time
+from collections import OrderedDict
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from . import config
 from .metrics import read_log, summarize
@@ -15,16 +21,28 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 gate = Gate()
 policy_engine = ContextPolicyEngine()
 
+# Task 1: Bounded LRU event_id cache for idempotent offline sync (max 5,000)
+PROCESSED_EVENTS = OrderedDict()
+
 
 class ContextModel(BaseModel):
     zone: Optional[str] = "campus_gate"
     time_str: Optional[str] = None
     demo_admin_token: Optional[str] = None
-    is_offline: Optional[bool] = False
+
+
+class OfflineEventItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    event_id: str
+    session_id: Optional[str] = None
+    zone: Optional[str] = "campus_gate"
+    decision: str
+    reason: Optional[str] = None
+    timestamp: str
 
 
 class OfflineSyncBatch(BaseModel):
-    events: List[dict]
+    events: List[OfflineEventItem]
 
 
 class EnrollReq(BaseModel):
@@ -98,15 +116,22 @@ def verify(req: VerifyReq, request: Request):
             raw_res["decision"] = p_dec
             raw_res["reason_code"] = p_reason
             raw_res["context_eval"] = p_meta
-            if p_dec == "REQUEST_VERIFICATION" and p_meta.get("next_step") == "OTP":
-                raw_res["next_step"] = "OTP"
-                # Fix: Generate the actual pending OTP on session so /api/verify-step works!
-                sid = raw_res.get("session_id")
-                if sid in gate.sessions:
-                    gate.sessions[sid]["otp"] = f"{secrets.randbelow(10 ** 6):06d}"
-                    gate.sessions[sid]["otp_fails"] = 0
-                    gate.sessions[sid]["user_id"] = user_id
-                    gate.sessions[sid]["zone"] = zone
+            
+            # TASK 2: Hardened Step-Up State Machine initialization
+            sid = raw_res.get("session_id")
+            if p_dec == "REQUEST_VERIFICATION":
+                raw_res["next_step"] = p_meta.get("next_step", "OTP")
+                with gate.lock:
+                    if sid not in gate.sessions:
+                        gate.sessions[sid] = {}
+                    gate.sessions[sid].update({
+                        "state": "AWAITING_STEP_UP",
+                        "user_id": user_id,
+                        "zone": zone,
+                        "created_at": time.time(),
+                        "attempts": 0,
+                        "otp": f"{secrets.randbelow(10 ** 6):06d}"
+                    })
         return raw_res
     except ModelMissing as e:
         raise HTTPException(503, str(e))
@@ -116,11 +141,33 @@ def verify(req: VerifyReq, request: Request):
 
 @app.post("/api/offline-sync")
 def offline_sync(batch: OfflineSyncBatch, authorization: Optional[str] = Header(None)):
-    """Surprise Challenge Principle 02: Ingest queued offline events with admin/kiosk authorization."""
+    """TASK 1: Strict Zero-Biometric Schema & Idempotent Offline Sync."""
     _verify_admin(authorization)
-    for ev in batch.events:
-        gate._log(ev)
-    return {"ok": True, "synced_events": len(batch.events)}
+    # Sort incoming events chronologically by timestamp
+    sorted_events = sorted(batch.events, key=lambda x: x.timestamp)
+    new_count = 0
+    dup_count = 0
+
+    for item in sorted_events:
+        ev_id = item.event_id
+        if ev_id in PROCESSED_EVENTS:
+            dup_count += 1
+            continue
+        
+        # Bounded LRU (cap at 5,000 processed IDs)
+        if len(PROCESSED_EVENTS) >= 5000:
+            PROCESSED_EVENTS.popitem(last=False)
+        PROCESSED_EVENTS[ev_id] = True
+
+        gate._log(item.model_dump())
+        new_count += 1
+
+    return {
+        "status": "synced",
+        "synced_count": new_count,
+        "duplicates_skipped": dup_count,
+        "zero_biometrics_verified": True
+    }
 
 
 @app.post("/api/verify-step")

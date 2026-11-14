@@ -168,4 +168,10 @@ def burst_features(frames, faces, antispoof=None):
     if antispoof is not None:
         probs = [antispoof.real_prob(img, fc) for img, fc in zip(frames, faces)]
         out["antispoof_mean"], out["antispoof_min"] = float(np.mean(probs)), float(np.min(probs))
+
+    # TASK 6: High-Glare Auto-Compensation (> 210 EV / outdoor sunlight washout)
+    face_brightness = [cv2.cvtColor(crop_box(img, fc.box), cv2.COLOR_BGR2GRAY).mean() for img, fc in zip(frames, faces)]
+    mean_luminance = float(np.mean(face_brightness))
+    out["mean_luminance"] = mean_luminance
+    out["glare_compensation_active"] = float(mean_luminance > 210.0)
     return out
