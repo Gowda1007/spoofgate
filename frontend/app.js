@@ -685,12 +685,12 @@ function init() {
   $('cam-retry').addEventListener('click', startCamera);
   $('offline-toggle').addEventListener('change', (e) => setOffline(e.target.checked));
   $('btn-sync').addEventListener('click', syncQueue);
-  $('btn-stats').addEventListener('click', refreshStats);
+  if ($('btn-stats')) $('btn-stats').addEventListener('click', refreshStats);
   document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setTimeOverride(b.dataset.time)));
   $('time-custom').addEventListener('change', (e) => setTimeOverride(e.target.value));
   if ($('btn-admin')) $('btn-admin').addEventListener('click', () => { heartbeat(); $('admin').showModal(); });
-  $('btn-enroll').addEventListener('click', enroll);
-  $('btn-revoke').addEventListener('click', revoke);
+  if ($('btn-enroll')) $('btn-enroll').addEventListener('click', enroll);
+  if ($('btn-revoke')) $('btn-revoke').addEventListener('click', revoke);
   $('zone').addEventListener('change', () => { hideStep(); setHero('idle', 'READY', 'Step into the frame', `Zone: ${ZONES[$('zone').value]}`); });
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
