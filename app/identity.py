@@ -45,8 +45,9 @@ class IdentityStore:
 
     def __init__(self):
         config.STORE_DIR.mkdir(parents=True, exist_ok=True)
+        config.KEYS_DIR.mkdir(parents=True, exist_ok=True)
         self.tpl_path = config.STORE_DIR / "templates.json"
-        self.key_path = config.STORE_DIR / "keys.json"
+        self.key_path = config.KEYS_DIR / "keys.json"
         self.lock = threading.Lock()
         self.tpl = self._load(self.tpl_path)
         self.keys = self._load(self.key_path)

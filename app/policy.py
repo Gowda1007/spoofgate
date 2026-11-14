@@ -24,13 +24,14 @@ class ContextPolicyEngine:
 
     def evaluate_access(self, user_id: str, zone: str = "campus_gate", time_str: str = None) -> Tuple[str, str, Dict[str, Any]]:
         """
-        Returns: (Decision: "ALLOW" | "STEP_UP" | "DENY", ReasonCode: str, ContextMetadata: dict)
+        Returns: (Decision: "ALLOW" | "REQUEST_VERIFICATION" | "DENY", ReasonCode: str, ContextMetadata: dict)
+        Standardized terminology: 'REQUEST_VERIFICATION' used for step-up states across pipeline.
         """
         self._load()
         users = self.policy.get("users", {})
         zones = self.policy.get("zones", {})
 
-        # Default time if not simulated
+        # Server clock is authoritative
         if not time_str:
             time_str = datetime.datetime.now().strftime("%H:%M")
 
@@ -74,9 +75,9 @@ class ContextPolicyEngine:
                 "simulated_time": time_str
             }
 
-        # Outside hours -> STEP_UP VERIFICATION (The core of the surprise challenge!)
-        return "STEP_UP", "AFTER_HOURS_POLICY_TRIGGER", {
+        # Outside hours -> REQUEST_VERIFICATION (step-up challenge)
+        return "REQUEST_VERIFICATION", "AFTER_HOURS_POLICY_TRIGGER", {
             "window": f"{sched['start']} - {sched['end']}",
             "simulated_time": time_str,
-            "next_step": "SUPERVISOR_OTP"
+            "next_step": "OTP"
         }

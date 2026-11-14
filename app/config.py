@@ -50,6 +50,16 @@ LOCK_WINDOW_S = _i("LOCK_WINDOW_S", 180)
 LOCK_SECONDS = _i("LOCK_SECONDS", 300)
 MAX_RETRIES = _i("MAX_RETRIES", 3)
 
+# Security & Keys
+KEYS_DIR = Path(os.getenv("KEYS_DIR", str(ROOT.parent / ".keys")))
+KEYS_DIR.mkdir(parents=True, exist_ok=True)
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "hid-demo-secret-token-2026")
+DEMO_MODE = os.getenv("DEMO_MODE", "1") == "1"
+
+# Request Limits
+MAX_FRAMES_PER_REQUEST = _i("MAX_FRAMES_PER_REQUEST", 10)
+MAX_FRAME_BYTES = _i("MAX_FRAME_BYTES", 2_000_000)  # 2MB max per frame
+
 # optional anti-spoof ONNX details (these differ between ports; check yours)
 ANTISPOOF_SCALE = _f("ANTISPOOF_SCALE", 2.7)
 ANTISPOOF_NORM = os.getenv("ANTISPOOF_NORM", "raw")   # raw = 0..255, unit = 0..1

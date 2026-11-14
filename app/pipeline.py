@@ -116,10 +116,17 @@ class Gate:
             if fc is None:
                 continue
             q = quality(img, fc)
-            if q["ok"]:
-                cands.append((q["sharpness"], img, fc))
+            if not q["ok"]:
+                continue
+            # Security Rule: Verify Liveness during enrollment (no enrolling printed photos or screens!)
+            if self.live.trained:
+                feats = burst_features([img], [fc], self.anti)
+                p_live = self.live.predict_prob(feats)
+                if p_live < self.live.t_deny:
+                    continue  # Reject spoofed enrollment frames
+            cands.append((q["sharpness"], img, fc))
         if not cands:
-            raise ValueError("no usable face found (check light, distance, blur)")
+            raise ValueError("no usable live face found for enrollment (check lighting, or spoof attempt rejected)")
         cands.sort(key=lambda c: -c[0])
         embs = [self.emb.embed(img, fc) for _, img, fc in cands[:8]]
         self.store.enroll(user_id, embs)
