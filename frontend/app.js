@@ -687,7 +687,7 @@ function init() {
   $('btn-stats').addEventListener('click', refreshStats);
   document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setTimeOverride(b.dataset.time)));
   $('time-custom').addEventListener('change', (e) => setTimeOverride(e.target.value));
-  $('btn-admin').addEventListener('click', () => { heartbeat(); $('admin').showModal(); });
+  if ($('btn-admin')) $('btn-admin').addEventListener('click', () => { heartbeat(); $('admin').showModal(); });
   $('btn-enroll').addEventListener('click', enroll);
   $('btn-revoke').addEventListener('click', revoke);
   $('zone').addEventListener('change', () => { hideStep(); setHero('idle', 'READY', 'Step into the frame', `Zone: ${ZONES[$('zone').value]}`); });
