@@ -147,8 +147,13 @@ class Gate:
         t_start = time.perf_counter()
         sid = session_id or uuid.uuid4().hex[:12]
         with self.lock:
+            # TTL Session Eviction: Prevent Memory Leaks across long-running kiosks
+            if len(self.sessions) > 500:
+                oldest_keys = list(self.sessions.keys())[:100]
+                for k in oldest_keys:
+                    self.sessions.pop(k, None)
             sess = self.sessions.setdefault(sid, {"attempts": 0, "otp": None, "otp_fails": 0,
-                                                  "claimed_id": claimed_id})
+                                                  "claimed_id": claimed_id, "created_at": time.time()})
             sess["attempts"] += 1
         timings = {"decode": decode_ms}
         p_live, sim, uid = None, None, None
