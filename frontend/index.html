@@ -1,116 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SpoofGate kiosk</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424"><title>SpoofGate | Campus Access</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+:root{color-scheme:dark;--bg:#0a1220;--panel:#111d30;--line:#263750;--muted:#9aabc1;--ink:#eef4ff;--blue:#4d91f7;--green:#36c995;--red:#f47780;--amber:#f3bd5d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0,#1b3457 0,transparent 42%),var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+.bar{min-height:68px;padding:12px max(20px,calc((100% - 1160px)/2));display:flex;align-items:center;gap:22px;border-bottom:1px solid var(--line);background:#0a1220e8}
+.brand{display:flex;gap:10px;align-items:center;color:var(--ink);text-decoration:none}.brand strong{font-size:20px}.brand span{color:var(--muted);font-size:12px}.nav{display:flex;gap:16px;margin-left:auto}.nav a{color:var(--muted);text-decoration:none;font-size:13px}
+.pill,.dot{border:1px solid var(--line);border-radius:99px;padding:5px 10px;color:var(--muted);font-size:12px}
+.settings{max-width:1160px;margin:20px auto;padding:15px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:15px}
+.field{display:grid;gap:5px;color:var(--muted);font-size:12px}select,input{background:#0b1627;color:var(--ink);border:1px solid #354966;border-radius:8px;padding:9px;font:inherit}.seg{display:flex;gap:5px;align-items:center}.seg button,.btn{background:#1b2b43;color:var(--ink);border:1px solid #354966;border-radius:9px;padding:9px 12px;cursor:pointer}.seg button[aria-pressed=true],.primary{background:#225fba;border-color:#4d91f7}.btn:disabled{opacity:.45;cursor:not-allowed}.switch{display:flex;gap:8px;align-items:center}
+.kiosk{max-width:1160px;margin:20px auto 50px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.reader,.result,.panel{background:linear-gradient(155deg,#14243b,#101a2a);border:1px solid var(--line);border-radius:17px;padding:21px;min-width:0}
+.lens{position:relative;overflow:hidden;background:#050b14;border-radius:13px;aspect-ratio:4/3}.feed,video{width:100%;height:100%;object-fit:cover}.oval{position:absolute;inset:12% 27%;border:2px solid #72b4ff;border-radius:48%;box-shadow:0 0 0 999px #06101a66;pointer-events:none}.over{position:absolute;inset:0;background:#08111eee;padding:22px}.go{width:100%;margin-top:12px;padding:13px}.hint,.muted,.why{color:var(--muted)}.verdict{padding:18px;background:#0b1626;border:1px solid var(--line);border-radius:13px}.state{font-size:12px;color:var(--blue);letter-spacing:1px}.verdict h1{font-size:25px;margin:7px 0}.checks{list-style:none;padding:0;margin:16px 0}.checks li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #263750}.checks .val{margin-left:auto;color:var(--muted)}.timing{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px}.track{height:5px;flex:1;background:#263750;border-radius:8px}.track i{display:block;height:100%;background:var(--blue);width:0}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.admin-grid label{display:grid;gap:6px;color:var(--muted);font-size:12px}.admin-grid input{width:100%}.next,.queue{margin-top:15px;padding:14px;border:1px solid var(--line);border-radius:12px}.row{display:flex;gap:8px;flex-wrap:wrap}.err{color:var(--red)}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#20334e;padding:10px 18px;border-radius:10px;display:none}.on{display:block!important}
+@media(max-width:800px){.kiosk{grid-template-columns:1fr;margin:14px}.settings{margin:14px}.bar{padding:12px 14px;flex-wrap:wrap}.nav{gap:9px}.nav a{font-size:11px}}
+</style></head>
 <body class="theme-kiosk">
-  <header class="bar">
-    <a class="brand" href="index.html">
-      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <strong>SpoofGate</strong>
-      <span id="where">Main campus gate</span>
-    </a>
-    <nav class="nav" aria-label="Dashboards">
-      <a href="index.html" aria-current="page">Kiosk</a>
-      <a href="admin.html">Institution</a>
-      <a href="redteam.html">Red team</a>
-    </nav>
-    <span class="dot" id="engine-dot">Connecting</span>
-  </header>
-
-  <section class="settings" aria-label="Demo settings">
-    <span class="label">Demo settings</span>
-    <label class="field">Entrance
-      <select id="zone">
-        <option value="campus_gate">Main campus gate (open 24/7)</option>
-        <option value="lab_cse">AI Lab (CSE), scheduled hours</option>
-        <option value="server_room">Server room, faculty only</option>
-      </select>
-    </label>
-    <div class="field">Time used for access rules
-      <div class="seg" role="group" aria-label="Clock">
-        <button type="button" data-time="" aria-pressed="true">Real time</button>
-        <button type="button" data-time="11:30" aria-pressed="false">11:30</button>
-        <button type="button" data-time="23:15" aria-pressed="false">23:15</button>
-        <input type="time" id="time-custom" aria-label="Other time">
-      </div>
-    </div>
-    <div class="field">Connection to central service
-      <label class="switch"><input type="checkbox" id="offline"><i></i><span id="offline-label">Connected</span></label>
-    </div>
-    <div class="setup" id="setup" aria-live="polite"></div>
-  </section>
-
-  <div class="offline-note" id="offline-note" hidden>
-    <span><b>Offline safe mode.</b> This kiosk decides on its own with stricter rules. Restricted areas stay locked and doubtful cases go to the security desk.</span>
-    <span id="offline-rule-text" class="small"></span>
-  </div>
-
-  <main class="kiosk">
-    <section class="reader" aria-label="Camera">
-      <div class="lens" id="lens">
-        <div class="feed">
-          <video id="video" playsinline muted autoplay></video>
-          <div class="oval" aria-hidden="true"></div>
-          <div class="shutter" id="shutter"></div>
-          <span class="edge" id="edge" hidden>Working offline</span>
-          <div class="over" id="cam-over" hidden>
-            <h3>Camera unavailable</h3>
-            <p id="cam-error"></p>
-            <button class="btn" id="cam-retry" type="button">Try the camera again</button>
-          </div>
-        </div>
-      </div>
-      <button class="btn primary go" id="go" type="button" disabled><span id="go-text">Starting camera</span><kbd>Space</kbd></button>
-      <p class="hint">Look into the oval and press Verify. It takes about half a second and no photo is kept.</p>
-    </section>
-
-    <section class="result" aria-live="polite">
-      <div class="verdict" id="verdict">
-        <div class="state" id="v-state">Ready</div>
-        <h1 id="v-title">Look at the camera</h1>
-        <p class="why" id="v-why">Press Verify to check in.</p>
-      </div>
-
-      <div class="next" id="next" hidden>
-        <h3 id="n-title"></h3>
-        <p class="muted" id="n-text"></p>
-        <div class="row" id="n-actions"></div>
-        <div class="row" id="n-code" hidden>
-          <input class="otp" id="code" inputmode="numeric" maxlength="6" placeholder="······" autocomplete="one-time-code" aria-label="6-digit approval code">
-          <button class="btn primary" id="code-go" type="button">Confirm code</button>
-        </div>
-        <div class="wait" id="n-wait" hidden><span class="spinner" aria-hidden="true"></span><span id="n-wait-text"></span></div>
-        <p class="err" id="n-err"></p>
-      </div>
-
-      <ol class="checks" id="checks" aria-label="What was checked">
-        <li data-k="quality"><span class="ic"></span><span class="what">Face is clear</span><span class="val"></span></li>
-        <li data-k="liveness"><span class="ic"></span><span class="what">Real person, not a photo or screen</span><span class="val"></span></li>
-        <li data-k="identity"><span class="ic"></span><span class="what">Recognised</span><span class="val"></span></li>
-        <li data-k="policy"><span class="ic"></span><span class="what">Allowed here at this time</span><span class="val"></span></li>
-        <li data-k="offline" hidden><span class="ic"></span><span class="what">Offline safety rules</span><span class="val"></span></li>
-        <li data-k="approval" hidden><span class="ic"></span><span class="what">HR / Security approval</span><span class="val"></span></li>
-      </ol>
-
-      <div class="timing" id="timing">
-        <span class="muted">Decided in</span>
-        <span class="track" aria-hidden="true"><i id="t-fill"></i></span>
-        <strong id="t-total">–</strong>
-        <span class="parts" id="t-parts">Target: under 2 seconds from pressing Verify.</span>
-      </div>
-
-      <div class="queue" id="queue" hidden>
-        <span><b id="q-count">0</b> offline decisions saved on this kiosk, waiting to sync. Only time, place, result and scores are kept.</span>
-        <button class="btn sm" id="sync" type="button">Sync now</button>
-      </div>
-    </section>
-  </main>
-
-  <script src="common.js"></script>
-  <script src="kiosk.js"></script>
-</body>
-</html>
+<header class="bar"><a class="brand" href="/"><strong>◈ SpoofGate</strong><span id="where">Campus access control</span></a><nav class="nav"><a href="/" aria-current="page">Kiosk</a><a href="#admin" id="btn-admin">Institution</a><a href="/docs">API</a></nav><span class="pill" id="pill-engine"><span id="engine-dot">Connecting</span></span></header>
+<section class="settings"><strong>DEMO CONTROLS</strong>
+<label class="field">Access zone<select id="zone"><option value="campus_gate">Main campus gate</option><option value="lab_cse">AI Lab (CSE)</option><option value="server_room">Server room</option></select></label>
+<div class="field">Policy clock<div class="seg"><button type="button" data-time="" aria-pressed="true">Live</button><button type="button" data-time="11:30" aria-pressed="false">11:30</button><button type="button" data-time="23:15" aria-pressed="false">23:15</button><input type="time" id="time-custom"></div></div>
+<label class="field">Offline mode<span class="switch"><input type="checkbox" id="offline-toggle"><span id="offline-label">Connected</span></span></label>
+<div id="setup" class="muted">Connecting to verification engine…</div></section>
+<div id="offline-banner" hidden><span id="offline-text"></span></div>
+<main class="kiosk">
+<section class="reader" id="cam"><h2>Identity capture</h2><div class="lens" id="lens"><div class="feed"><video id="video" playsinline muted autoplay></video><div class="oval"></div><div id="flash"></div><div id="shutter"></div><span id="edge" hidden>Offline</span><div class="over" id="cam-msg" hidden><h3 id="cam-msg-title">Camera unavailable</h3><p id="cam-msg-text"></p><button class="btn" id="cam-retry" type="button">Retry camera</button></div></div></div>
+<div class="muted" id="cam-meta">Waiting for camera…</div><button class="btn primary go" id="btn-verify" type="button" disabled><span id="verify-text">Starting camera</span></button><button class="btn" id="btn-recapture" type="button">Recapture</button><p class="hint">Position one face inside the oval, then verify.</p><div>Elapsed: <strong id="watch">—</strong></div><div id="cam-badge"></div><div id="cam-over" hidden><p id="cam-error"></p></div></section>
+<section class="result"><div class="verdict" id="hero"><div class="state" id="hero-kicker">READY</div><h1 id="hero-title">Welcome to SpoofGate</h1><p class="why" id="hero-sub">Look at the camera to begin.</p><span id="hero-code"></span><span id="hero-icon"></span></div>
+<div id="verdict" hidden><span id="v-state"></span><h1 id="v-title"></h1><p id="v-why"></p></div>
+<h3>Verification trace</h3><ol class="checks" id="trace"><li data-k="capture"><i>○</i> Capture</li><li data-k="quality"><i>○</i> Quality</li><li data-k="liveness"><i>○</i> Liveness</li><li data-k="identity"><i>○</i> Identity</li><li data-k="policy"><i>○</i> Campus policy</li></ol>
+<div class="checks"><div>Decision latency <strong id="lat-total">—</strong></div><div>Live score <strong id="live-val">—</strong></div><div>Identity <strong id="id-user">—</strong></div><div>Zone <strong id="pol-zone">—</strong></div><div id="lat-break"></div><div id="sla-fill"></div><div id="live-note"></div><div id="pol-kv"></div></div>
+<div id="next" class="next" hidden><h3 id="n-title"></h3><p id="n-text"></p><div id="n-actions" class="row"></div><div id="n-code" class="row" hidden><input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button class="btn primary" id="btn-otp">Submit code</button></div><p id="step-err" class="err"></p><p id="otp-demo"></p><button class="btn" id="btn-action">Head-turn check</button><button class="btn" id="btn-otp-demo">Demo code</button><button class="btn" id="step-recapture">Recapture</button><div id="step" hidden><h4 id="step-title"></h4><p id="step-text"></p><button id="step-otp" class="btn" type="button" hidden>Enter code</button><button id="step-action" class="btn" type="button" hidden>Start head-turn</button></div></div>
+<div id="queue" class="queue" hidden><span id="queue-count">0</span> pending offline decisions <button class="btn" id="btn-sync">Sync</button><span id="q-count"></span><button id="sync" hidden></button></div>
+<div id="audit"></div><div id="offline-note" hidden><span id="offline-rule-text"></span></div><div id="stats-body"></div><div id="summary"></div></section></main>
+<dialog id="admin" style="background:#111d30;color:#eef4ff;border:1px solid #354966;border-radius:16px;max-width:760px;width:92%;padding:24px"><h2>Institution dashboard</h2><button class="btn" type="button" onclick="document.getElementById('admin').close()">Close</button>
+<div class="admin-grid"><label>Student ID<input id="enroll-id" placeholder="student-001"></label><div><button class="btn primary" id="btn-enroll" type="button">Enroll face</button><p id="enroll-msg"></p></div><label>Revoke student<select id="revoke-id"></select></label><div><button class="btn" id="btn-revoke" type="button">Revoke identity</button><p id="revoke-msg"></p></div></div><h3>System diagnostics</h3><dl id="health-kv"></dl><button class="btn" id="btn-stats" type="button">Refresh statistics</button></dialog>
+<div id="toast" role="status"></div>
+<div hidden aria-hidden="true"><span id="r-live"></span><span id="r-sim"></span><span id="label"></span><input id="claimed"><span id="btn-sync-placeholder"></span><span id="offline"></span><span id="cam-meta-placeholder"></span><span id="n-wait"></span><span id="n-wait-text"></span><span id="n-err"></span><span id="t-fill"></span><span id="t-total"></span><span id="t-parts"></span><span id="timing"></span><span id="offline-rule-text-placeholder"></span><span id="edge-placeholder"></span></div>
+<script src="/app.js" defer></script></body></html>
