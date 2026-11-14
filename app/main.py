@@ -210,7 +210,8 @@ def aws_verify_liveness(req: AWSVerifyReq):
 
 
 @app.post("/api/enroll")
-def enroll(req: EnrollReq):
+def enroll(req: EnrollReq, authorization: Optional[str] = Header(None)):
+    _verify_admin(authorization)
     try:
         return {"ok": True, "user_id": req.user_id, "frames_used": gate.enroll(req.user_id, req.frames)}
     except ModelMissing as e:
