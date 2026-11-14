@@ -5,8 +5,9 @@ from . import config
 
 
 class LivenessModel:
-    """Wraps the trained fusion classifier. Until you run `python tools.py train`, it returns 0.5
-    (uncertain) so the whole pipeline still runs end to end."""
+    """Wraps the trained fusion classifier.
+    Production safety: When untrained, it strictly marks trained=False and returns 0.0 (fail-closed/untrusted),
+    preventing uncalibrated models from bypassing verification or falsely qualifying for step-up."""
 
     def __init__(self, path=config.LIVENESS_PATH):
         self.trained = False
@@ -26,7 +27,12 @@ class LivenessModel:
             self.t_allow = float(config.T_ALLOW)
 
     def score(self, feats: dict) -> float:
+        """Returns P(Live) in [0.0, 1.0]. Returns 0.0 if model is not trained (fail-closed)."""
         if not self.trained:
-            return 0.5
+            return 0.0
         x = np.array([[feats.get(n, 0.0) for n in self.names]], dtype=np.float64)
         return float(self.pipe.predict_proba(x)[0, 1])   # classes_ = [0 spoof, 1 live]
+
+    def predict_prob(self, feats: dict) -> float:
+        """Alias for score(feats) to maintain backwards compatibility and prevent interface mismatches."""
+        return self.score(feats)

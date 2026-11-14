@@ -19,6 +19,10 @@ COPY . .
 # Download open-source YuNet and SFace models into models/ directory
 RUN python download_models.py
 
+# Create non-root user for security hardening
+RUN useradd -u 1000 -m appuser && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8000
 
 # Run FastAPI backend with Uvicorn

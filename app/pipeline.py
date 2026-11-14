@@ -14,6 +14,8 @@ from .detect import FaceDetector, prep_frame, quality, yaw_signed
 from .features import AntiSpoof, burst_features
 from .identity import Embedder, IdentityStore
 from .liveness import LivenessModel
+from .decision_engine import DecisionEngine
+from .aws_service import AWSRekognitionService
 
 
 class ModelMissing(RuntimeError):
@@ -42,6 +44,8 @@ class Gate:
         self.emb = Embedder()
         self.store = IdentityStore()
         self.live = LivenessModel()
+        self.decision_engine = DecisionEngine()
+        self.aws = AWSRekognitionService()
         self.anti = None
         if config.ANTISPOOF_PATH.exists():
             try:
@@ -55,12 +59,24 @@ class Gate:
         config.LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     # ---------------------------------------------------------------- status
-    def status(self):
+    def status(self, include_sensitive: bool = False):
         self.store.reload()
-        return {"detector": self.det.name, "identity_model": self.emb.ready,
-                "antispoof_onnx": self.anti is not None, "liveness_trained": self.live.trained,
-                "t_deny": self.live.t_deny, "t_allow": self.live.t_allow,
-                "id_match": config.ID_MATCH, "enrolled_users": sorted(self.store.tpl)}
+        base = {
+            "status": "healthy",
+            "detector": self.det.name,
+            "identity_model": self.emb.ready,
+            "antispoof_onnx": self.anti is not None,
+            "liveness_trained": self.live.trained,
+            "aws_rekognition_available": self.aws.available,
+            "verification_mode": config.VERIFICATION_MODE,
+            "cost_prefilter_active": config.ENABLE_LOCAL_PREFILTER,
+            "t_deny": self.live.t_deny,
+            "t_allow": self.live.t_allow,
+            "id_match": config.ID_MATCH
+        }
+        if include_sensitive:
+            base["enrolled_users"] = sorted(self.store.tpl)
+        return base
 
     # ------------------------------------------------------------- analysis
     def analyze(self, frames, need_identity=True):
@@ -121,7 +137,7 @@ class Gate:
             # Security Rule: Verify Liveness during enrollment (no enrolling printed photos or screens!)
             if self.live.trained:
                 feats = burst_features([img], [fc], self.anti)
-                p_live = self.live.predict_prob(feats)
+                p_live = self.live.score(feats)
                 if p_live < self.live.t_deny:
                     continue  # Reject spoofed enrollment frames
             cands.append((q["sharpness"], img, fc))
@@ -193,11 +209,13 @@ class Gate:
                         sess["state"] = "AWAITING_STEP_UP"
                         sess["created_at"] = time.time()
                         sess["user_id"] = uid
+                        sess["similarity"] = sim
                         r = self._otp_response(sess, sid, p_live, ident, id_score)
                 else:
                     sess["state"] = "AWAITING_STEP_UP"
                     sess["created_at"] = time.time()
                     sess["user_id"] = uid
+                    sess["similarity"] = sim
                     r = self._resp("REQUEST_VERIFICATION", "LOW_CONFIDENCE", min(p_live, id_score), "ACTION",
                                    p_live=p_live, ident=ident)
                 r["quality"] = a.get("quality")
@@ -220,7 +238,7 @@ class Gate:
         sess["otp"], sess["otp_fails"] = otp, 0
         sess["state"] = "AWAITING_STEP_UP"
         sess["created_at"] = time.time()
-        print(f"[OTP] session {sid}: {otp}   (demo: also at GET /api/otp/{sid})")
+        # Security hardening: Raw OTP is never written to public stdout or production logs
         return self._resp("REQUEST_VERIFICATION", "LOW_CONFIDENCE", min(p_live, id_score), "OTP",
                           p_live=p_live, ident=ident)
 
@@ -249,7 +267,8 @@ class Gate:
             
             if otp == sess["otp"]:
                 uid = sess.get("user_id")
-                ident = {"matched": True, "user_id": uid, "similarity": 1.0} if uid else None
+                stored_sim = sess.get("similarity", 1.0)
+                ident = {"matched": bool(uid), "user_id": uid, "similarity": stored_sim} if uid else None
                 with self.lock:
                     sess["state"] = "COMPLETED"
                     sess["otp"] = None

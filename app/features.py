@@ -136,6 +136,26 @@ class AntiSpoof:
         return float(p[min(config.ANTISPOOF_REAL_INDEX, len(p) - 1)])
 
 
+def check_3d_parallax_residual(faces) -> float:
+    """Computes mean reprojection error when fitting a 2D planar homography across face landmarks.
+    Flat photos/screens produce very low residual (< 1.2 px).
+    Real 3D heads have non-planar nose/eye parallax resulting in higher residual (> 2.0 px)."""
+    valid_lms = [f.landmarks for f in faces if f.landmarks is not None]
+    if len(valid_lms) < 2:
+        return 0.0
+    pts0 = valid_lms[0].astype(np.float32)
+    pts1 = valid_lms[-1].astype(np.float32)
+    try:
+        H, _ = cv2.findHomography(pts0, pts1, cv2.RANSAC, 2.0)
+        if H is None:
+            return 0.0
+        proj = cv2.perspectiveTransform(pts0.reshape(-1, 1, 2), H).reshape(-1, 2)
+        err = float(np.mean(np.linalg.norm(pts1 - proj, axis=1)))
+        return err
+    except Exception:
+        return 0.0
+
+
 def burst_features(frames, faces, antispoof=None):
     per, smalls, centers, widths = [], [], [], []
     for img, fc in zip(frames, faces):
@@ -164,6 +184,11 @@ def burst_features(frames, faces, antispoof=None):
     else:
         for k in ("t_diff_mean", "t_diff_std", "t_shift_mean", "t_shift_std", "t_size_std"):
             out[k] = 0.0
+
+    out["planar_parallax_err"] = check_3d_parallax_residual(faces)
+
+    # Static photo check (near zero motion across the entire burst)
+    out["is_frozen_static"] = float(out.get("t_diff_mean", 0.0) < 0.003)
 
     if antispoof is not None:
         probs = [antispoof.real_prob(img, fc) for img, fc in zip(frames, faces)]

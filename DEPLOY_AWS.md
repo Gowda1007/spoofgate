@@ -48,15 +48,39 @@ docker run -d -p 8000:8000 --name spoofgate spoofgate-backend
 
 ---
 
-## 🔒 Security Group Configuration (Crucial!)
-In the AWS EC2 Management Console:
-1. Go to **Security Groups** attached to your instance.
-2. Under **Inbound Rules**, click **Edit inbound rules**.
-3. Add a rule:
-   - **Type:** Custom TCP
-   - **Port Range:** `8000`
-   - **Source:** `0.0.0.0/0` (Anywhere)
-4. (Optional) Allow port `22` (SSH) and `443` (HTTPS).
+## 🔒 Security & Cost-Optimization Hardening
+
+### 1. IAM Instance Profile (No hardcoded credentials)
+Attach an IAM Role to your EC2 instance with the following permissions instead of storing static access keys:
+- `rekognition:CreateFaceLivenessSession`
+- `rekognition:GetFaceLivenessSessionResults`
+- `rekognition:CompareFaces`
+
+### 2. Built-in Cost Optimization
+SpoofGate includes an edge pre-filter gate (`ENABLE_LOCAL_PREFILTER=1`).
+- **Cost Savings:** AWS Face Liveness costs ~$0.015 - $0.020 per session.
+- Low-quality frames, missing faces, multi-face frames, and static 2D planar photos are rejected locally on the CPU at **$0.00 cost** before making any AWS API calls.
+- `CompareFaces` ($0.001) is strictly guarded behind a **Liveness-First hard gate** and is never called if liveness fails.
+
+### 3. Production HTTPS Reverse Proxy (Nginx)
+Do NOT expose port 8000 directly to `0.0.0.0/0` in production. Run behind an Nginx reverse proxy with HTTPS (Let's Encrypt / AWS Certificate Manager):
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name gate.yourcampus.edu;
+
+    ssl_certificate /etc/letsencrypt/live/gate.yourcampus.edu/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gate.yourcampus.edu/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
 
 ---
 

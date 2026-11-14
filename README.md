@@ -1,8 +1,12 @@
-# SpoofGate Backend: CPU-Only Liveness & Biometric Access Control
+# SpoofGate: Hybrid Presentation Attack Detection & Biometric Access Control
 
-Open-source, CPU-only presentation attack detection (PAD) and biometric identity verification system for unattended HID entry kiosks.
+High-assurance, cost-optimized biometric access control system combining **AWS Rekognition (Face Liveness & CompareFaces)** with a **zero-cost local CPU edge filter** (YuNet & SFace cancelable biometrics).
 
-Compliant with **evaluated using ISO/IEC 30107-3 metrics (APCER/BPCER)**, integrating **Context-Aware Schedule Policies** and an **Offline Fail-Safe Gate** (never fails open, zero raw biometrics stored).
+Features:
+- **Hybrid Cloud + Edge Architecture:** Edge pre-filtering rejects low-quality frames, missing faces, multi-face presentations, and static 2D planar photos on the local CPU at **$0.00 cost**, saving ~$0.015 - $0.020 per call before hitting AWS Rekognition.
+- **Centralized Risk-Based Decision Engine:** Strict hard gates: Liveness Gate $\rightarrow$ Identity Gate $\rightarrow$ Context/Schedule Policy. A spoofed photo or video replay is **never** approved, regardless of face similarity.
+- **Cancelable Biometric Cryptography:** $Q_k$ random orthogonal projection matrices store zero raw biometric embeddings at rest.
+- **PAD Metric Benchmarks:** Evaluates Attack Presentation Classification Error Rate (APCER) and Bona Fide Presentation Classification Error Rate (BPCER) following ISO/IEC 30107-3 methodology.
 
 ---
 
@@ -35,10 +39,13 @@ API Documentation & Swagger UI: `http://localhost:8000/docs`
 |---|---|---|
 | `/api/verify` | `POST` | Core multi-signal burst verification (< 150ms). Decides `ALLOW`, `STEP_UP`, or `DENY`. |
 | `/api/verify-step` | `POST` | Secondary challenge handler (Action head-turn or Supervisor OTP). |
+| `/api/aws/liveness/session` | `POST` | Cost-optimized AWS Face Liveness session creation with local edge pre-filter. |
+| `/api/aws/liveness/verify` | `POST` | Ingests AWS Face Liveness results, runs CompareFaces, and evaluates Decision Engine. |
 | `/api/enroll` | `POST` | Extracts 128-d vector and generates a cancelable orthogonal template ($Q_k$). |
 | `/api/offline-sync` | `POST` | Ingests cached offline audit records (zero raw biometrics stored). |
-| `/api/health` | `GET` | Health status, loaded models, and enrolled user IDs. |
-| `/api/stats` | `GET` | Empirical Red-Team confusion matrix & latency telemetry. |
+| `/api/health` | `GET` | Health status and operational mode. |
+| `/api/admin/diagnostics` | `GET` | Authenticated system telemetry and enrolled identities. |
+| `/api/stats` | `GET` | Empirical confusion matrix & latency telemetry. |
 | `/api/users/{id}` | `DELETE` | Permanently revokes a cancelable template and key. |
 
 ---

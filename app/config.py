@@ -56,6 +56,19 @@ KEYS_DIR.mkdir(parents=True, exist_ok=True)
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "hid-demo-secret-token-2026")
 DEMO_MODE = os.getenv("DEMO_MODE", "1") == "1"
 
+# CORS Configuration (Restricted in production; override via CORS_ORIGINS)
+_cors_env = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000")
+CORS_ORIGINS = [o.strip() for o in _cors_env.split(",") if o.strip()]
+if DEMO_MODE and "*" not in CORS_ORIGINS:
+    CORS_ORIGINS.append("*")
+
+# Hybrid & AWS Rekognition Configuration
+VERIFICATION_MODE = os.getenv("VERIFICATION_MODE", "hybrid")  # "hybrid" | "local" | "aws_strict"
+ENABLE_LOCAL_PREFILTER = os.getenv("ENABLE_LOCAL_PREFILTER", "1") == "1"  # Cost-Optimization Filter
+AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")  # Mumbai default
+AWS_LIVENESS_THRESHOLD = _f("AWS_LIVENESS_THRESHOLD", 80.0)
+AWS_FACE_MATCH_THRESHOLD = _f("AWS_FACE_MATCH_THRESHOLD", 95.0)
+
 # Request Limits
 MAX_FRAMES_PER_REQUEST = _i("MAX_FRAMES_PER_REQUEST", 10)
 MAX_FRAME_BYTES = _i("MAX_FRAME_BYTES", 2_000_000)  # 2MB max per frame

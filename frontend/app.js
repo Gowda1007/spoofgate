@@ -186,7 +186,7 @@ function renderStatus() {
   if (S.engineUp === false) setPill('pill-engine', 'bad', 'unreachable · fail closed');
   else if (S.engineUp) setPill('pill-engine', h.detector && /yunet/i.test(h.detector) ? 'ok' : 'warn', `online · ${h.detector || '?'}`);
   if (S.engineUp) {
-    setPill('pill-model', h.liveness_trained ? 'ok' : 'warn', h.liveness_trained ? 'trained' : 'NOT trained (scores 0.5)');
+    setPill('pill-model', h.liveness_trained ? 'ok' : 'warn', h.liveness_trained ? 'trained' : 'NOT trained (fail-closed)');
   }
   setPill('pill-link', S.offline ? 'warn' : 'ok', S.offline ? 'OFFLINE · safe mode' : 'online');
   setPill('pill-clock', S.timeOverride ? 'warn' : 'ok', S.timeOverride ? `DEMO OVERRIDE ${S.timeOverride}` : 'live (server)');
@@ -196,7 +196,9 @@ function renderStatus() {
   if (kv) {
     const rows = S.engineUp ? [
       ['Detector', h.detector], ['Face model (SFace)', h.identity_model ? 'loaded' : 'MISSING'],
-      ['MiniFASNet ONNX', h.antispoof_onnx ? 'loaded' : 'not used'], ['Liveness classifier', h.liveness_trained ? 'trained' : 'not trained'],
+      ['MiniFASNet ONNX', h.antispoof_onnx ? 'loaded' : 'not used'], ['Liveness classifier', h.liveness_trained ? 'trained' : 'not trained (fail-closed)'],
+      ['AWS Rekognition', h.aws_rekognition_available ? 'Active (ap-south-1)' : 'Local Zero-Cost Mode'],
+      ['Cost Pre-filter', h.cost_prefilter_active ? 'Active (saves $0.015/call)' : 'disabled'],
       ['Deny below / allow above', `${h.t_deny?.toFixed?.(2)} / ${h.t_allow?.toFixed?.(2)}`], ['Match threshold', h.id_match],
       ['Enrolled', (h.enrolled_users || []).join(', ') || 'none'],
     ] : [['Engine', 'unreachable']];

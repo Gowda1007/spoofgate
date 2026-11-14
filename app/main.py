@@ -17,7 +17,12 @@ from .pipeline import Gate, ModelMissing
 from .policy import ContextPolicyEngine
 
 app = FastAPI(title="SpoofGate")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["*"]
+)
 gate = Gate()
 policy_engine = ContextPolicyEngine()
 
@@ -78,9 +83,130 @@ def _device(req_device, request: Request):
     return req_device or (request.client.host if request.client else "unknown")
 
 
+class AWSLivenessSessionReq(BaseModel):
+    claimed_id: Optional[str] = None
+    prefilter_frames: Optional[List[str]] = None  # Optional client burst to run zero-cost local filter
+
+
+class AWSVerifyReq(BaseModel):
+    session_id: str
+    claimed_id: Optional[str] = None
+    zone: Optional[str] = "campus_gate"
+    time_str: Optional[str] = None
+    demo_admin_token: Optional[str] = None
+
+
 @app.get("/api/health")
 def health():
-    return gate.status()
+    return gate.status(include_sensitive=config.DEMO_MODE)
+
+
+@app.get("/api/admin/diagnostics")
+def admin_diagnostics(authorization: Optional[str] = Header(None)):
+    _verify_admin(authorization)
+    return gate.status(include_sensitive=True)
+
+
+@app.post("/api/aws/liveness/session")
+def aws_create_liveness_session(req: AWSLivenessSessionReq):
+    """
+    Cost-Optimized Endpoint:
+    If prefilter_frames are provided, runs local zero-cost edge verification.
+    If the face is blurry, missing, multiple faces, or obvious flat photo, rejects for $0.00!
+    Only creates an AWS Face Liveness session ($0.015) when pre-check passes.
+    """
+    if req.prefilter_frames:
+        try:
+            frames = [gate.decode_frame(f) if hasattr(gate, 'decode_frame') else __import__('app.pipeline', fromlist=['decode_frame']).decode_frame(f) for f in req.prefilter_frames]
+            faces = [gate.det.detect(f) for f in frames]
+            pairs = [(f, fc) for f, fc in zip(frames, faces) if fc is not None]
+            if not pairs:
+                raise HTTPException(400, "Local pre-filter reject: No face detected. Zero-cost fast reject.")
+            quals = [__import__('app.detect', fromlist=['quality']).quality(f, fc) for f, fc in pairs]
+            should_proceed, reason = gate.aws.pre_filter_check(quals[0])
+            if not should_proceed:
+                raise HTTPException(400, f"Local pre-filter reject: {reason}. Saved $0.015 AWS fee.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            pass  # Fall through to standard creation if prefilter decoding errors
+
+    try:
+        session_info = gate.aws.create_liveness_session()
+        return session_info
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+
+
+@app.post("/api/aws/liveness/verify")
+def aws_verify_liveness(req: AWSVerifyReq):
+    """
+    Evaluates AWS Face Liveness session results with Liveness-First Hard Gate.
+    If liveness succeeds, extracts reference image, runs identity matching,
+    and executes the centralized DecisionEngine.
+    """
+    try:
+        results = gate.aws.get_liveness_session_results(req.session_id)
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+
+    liveness_pass = results.get("liveness_pass", False)
+    liveness_conf = results.get("confidence", 0.0) / 100.0  # normalize to 0..1
+    ref_bytes = results.get("reference_image_bytes")
+
+    # Hard Gate 1: If liveness fails, reject immediately. Never call CompareFaces ($0.001 saved).
+    if not liveness_pass or not ref_bytes:
+        return gate.decision_engine.evaluate(
+            quality_ok=True,
+            quality_reasons=[],
+            liveness_score=liveness_conf,
+            liveness_pass=False,
+            liveness_provider="aws_rekognition",
+            identity_match=False,
+            user_id=req.claimed_id,
+            similarity=0.0,
+            id_score=0.0,
+            zone=req.zone or "campus_gate"
+        )
+
+    # Hard Gate 2: Liveness passed. Now perform Identity verification
+    # Try SFace cancelable template matching using decoded reference image
+    import cv2
+    import numpy as np
+    nparr = np.frombuffer(ref_bytes, np.uint8)
+    ref_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    sim, matched, uid = 0.0, False, req.claimed_id
+    if ref_img is not None:
+        fc = gate.det.detect(ref_img)
+        if fc is not None and gate.emb.ready:
+            emb = gate.emb.embed(ref_img, fc)
+            uid, sim = gate.store.identify(emb, req.claimed_id)
+            matched = bool(uid and sim >= config.ID_MATCH)
+
+    id_score = float(sim)
+
+    # Evaluate complete security protocol through DecisionEngine
+    sim_time = None
+    if req.time_str and config.DEMO_MODE and req.demo_admin_token == config.ADMIN_TOKEN:
+        sim_time = req.time_str
+
+    final_decision = gate.decision_engine.evaluate(
+        quality_ok=True,
+        quality_reasons=[],
+        liveness_score=liveness_conf,
+        liveness_pass=True,
+        liveness_provider="aws_rekognition",
+        identity_match=matched,
+        user_id=uid,
+        similarity=sim,
+        id_score=id_score,
+        zone=req.zone or "campus_gate",
+        time_str=sim_time
+    )
+    final_decision["aws_session_id"] = req.session_id
+    return final_decision
+
 
 
 @app.post("/api/enroll")

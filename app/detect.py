@@ -17,6 +17,7 @@ class Face:
     box: tuple                    # x, y, w, h (ints, inside the image)
     row: Optional[np.ndarray]     # raw YuNet row (15 values) or None for Haar
     score: float
+    face_count: int = 1
 
     @property
     def landmarks(self):
@@ -76,17 +77,20 @@ class FaceDetector:
                 _, faces = self.yunet.detect(img)
             if faces is None or len(faces) == 0:
                 return None
+            num_faces = len(faces)
             row = max(faces, key=lambda r: r[2] * r[3])
             box = _clip_box(row[0], row[1], row[2], row[3], W, H)
-            return Face(box, np.array(row, dtype=np.float32), float(row[14]))
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        s = min(1.0, 320.0 / W)                      # Haar is slow on big frames, so search a small copy
-        small = cv2.resize(gray, None, fx=s, fy=s, interpolation=cv2.INTER_AREA) if s < 1.0 else gray
-        boxes = self.haar.detectMultiScale(small, 1.1, 5, minSize=(max(20, int(60 * s)),) * 2)
-        if len(boxes) == 0:
-            return None
-        x, y, w, h = max(boxes, key=lambda b: b[2] * b[3])
-        return Face(_clip_box(x / s, y / s, w / s, h / s, W, H), None, 1.0)
+            return Face(box, np.array(row, dtype=np.float32), float(row[14]), face_count=num_faces)
+        if self.haar is not None:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            s = min(1.0, 320.0 / W)                      # Haar is slow on big frames, so search a small copy
+            small = cv2.resize(gray, None, fx=s, fy=s, interpolation=cv2.INTER_AREA) if s < 1.0 else gray
+            boxes = self.haar.detectMultiScale(small, 1.1, 5, minSize=(max(20, int(60 * s)),) * 2)
+            if len(boxes) == 0:
+                return None
+            x, y, w, h = max(boxes, key=lambda b: b[2] * b[3])
+            return Face(_clip_box(x / s, y / s, w / s, h / s, W, H), None, 1.0, face_count=len(boxes))
+        return None
 
 
 def yaw_signed(face: Face) -> float:
@@ -108,6 +112,8 @@ def quality(img, face: Face) -> dict:
     bright = float(g.mean())
     yaw = abs(yaw_signed(face))
     reasons = []
+    if face.face_count > 1:
+        reasons.append("multiple_faces")
     if min(w, h) < config.MIN_FACE_PX:
         reasons.append("face_too_small")
     if bright < config.MIN_BRIGHT:
@@ -119,4 +125,5 @@ def quality(img, face: Face) -> dict:
     if yaw > config.MAX_YAW:
         reasons.append("head_turned")
     return {"ok": not reasons, "reasons": reasons, "face_px": int(min(w, h)),
-            "brightness": round(bright, 1), "sharpness": round(sharp, 1), "yaw": round(yaw, 2)}
+            "brightness": round(bright, 1), "sharpness": round(sharp, 1), "yaw": round(yaw, 2),
+            "face_count": face.face_count}
