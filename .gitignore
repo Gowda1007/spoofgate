@@ -1,0 +1,24 @@
+# __pycache__
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# Model binaries (>100MB / weights downloaded via script)
+models/*.onnx
+models/*.joblib
+!models/.gitkeep
+
+# Local data & logs
+data/train/
+data/test/
+data/enroll/
+data/logs/
+data/store/
+!data/policy/
+!data/.gitkeep

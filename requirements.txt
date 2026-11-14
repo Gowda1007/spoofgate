@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+numpy>=1.24
+opencv-python>=4.8,<5   # pinned: OpenCV 5 moved things around
+scikit-learn>=1.3
+joblib>=1.3
+python-dotenv>=1.0
+onnxruntime>=1.17   # only needed if you add the optional MiniFASNet ONNX file

@@ -1,0 +1,43 @@
+{
+  "users": {
+    "nithya": {
+      "role": "student",
+      "department": "Computer Science",
+      "allowed_zones": ["campus_gate", "lab_cse"],
+      "schedule": {
+        "start": "08:00",
+        "end": "18:00"
+      },
+      "offline_pass_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "ACTIVE"
+    },
+    "vishal": {
+      "role": "faculty",
+      "department": "Electronics",
+      "allowed_zones": ["campus_gate", "lab_cse", "server_room"],
+      "schedule": {
+        "start": "00:00",
+        "end": "23:59"
+      },
+      "offline_pass_hash": "c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a",
+      "status": "ACTIVE"
+    }
+  },
+  "zones": {
+    "campus_gate": {
+      "name": "PES Main Campus Gate",
+      "requires_faculty": false,
+      "allow_24_7": true
+    },
+    "lab_cse": {
+      "name": "Advanced Computing & AI Lab",
+      "requires_faculty": false,
+      "allow_24_7": false
+    },
+    "server_room": {
+      "name": "Central Server Infrastructure",
+      "requires_faculty": true,
+      "allow_24_7": false
+    }
+  }
+}
