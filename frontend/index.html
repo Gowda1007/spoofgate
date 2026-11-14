@@ -1,74 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
-  <title>SpoofGate — Campus Access</title>
-  <link rel="stylesheet" href="/styles.css">
-  <style>
-    :root{color-scheme:dark;--bg:#0b1220;--panel:#111c2e;--line:#24344d;--muted:#93a4ba;--ink:#eef4ff;--blue:#5b9cff;--green:#31c48d;--red:#f16b75;--amber:#f4bd55}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0,#172b49 0,transparent 42%),var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}
-    .bar{height:70px;padding:0 max(24px,calc((100% - 1180px)/2));display:flex;align-items:center;gap:28px;border-bottom:1px solid var(--line);background:#0b1220e8}
-    .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}.brand strong{font-size:20px;letter-spacing:-.5px}.brand span{color:var(--muted);font-size:12px;margin-left:8px}
-    .nav{display:flex;gap:18px;margin-left:auto}.nav a{color:var(--muted);text-decoration:none;font-size:13px}.nav a[aria-current]{color:var(--ink)}
-    .dot,.pill{border:1px solid var(--line);border-radius:999px;padding:6px 11px;color:var(--muted);font-size:12px}
-    .settings{max-width:1180px;margin:22px auto;padding:14px 18px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#111c2e;border:1px solid var(--line);border-radius:16px}
-    .label,.field{font-size:12px;color:var(--muted)}.field{display:grid;gap:6px}select,input,button{font:inherit}select,input{background:#0b1525;color:var(--ink);border:1px solid #344761;border-radius:8px;padding:9px}
-    .seg{display:flex;gap:6px;align-items:center}.seg button,.btn{background:#1b2a40;border:1px solid #344761;color:var(--ink);border-radius:9px;padding:9px 13px;cursor:pointer}.seg button[aria-pressed=true],.primary{background:#2563c7;border-color:#4389ef}.btn:disabled{opacity:.45;cursor:not-allowed}
-    .switch{display:flex;gap:8px;align-items:center}.setup{color:var(--muted);font-size:12px}
-    .kiosk{max-width:1180px;margin:22px auto 60px;display:grid;grid-template-columns:minmax(300px,1fr) minmax(360px,1fr);gap:22px}
-    .reader,.result,.panel{background:linear-gradient(160deg,#142238,#101a2b);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 18px 50px #0003}
-    .reader h2,.result h2{margin:0 0 14px;font-size:18px}.lens{position:relative;overflow:hidden;border-radius:14px;background:#050b14;aspect-ratio:4/3}.feed,video{width:100%;height:100%;object-fit:cover}.oval{position:absolute;inset:12% 27%;border:2px solid #72b4ff;border-radius:48% 48% 45% 45%;box-shadow:0 0 0 999px #06101a55}.over{position:absolute;inset:0;background:#08111eeF;padding:25px}.go{width:100%;margin-top:14px;padding:14px}.hint,.muted,.why{color:var(--muted)}.verdict{padding:18px;background:#0b1626;border:1px solid var(--line);border-radius:13px}.state{font-size:12px;color:var(--blue);text-transform:uppercase;letter-spacing:1px}.verdict h1{font-size:26px;margin:7px 0}.checks{list-style:none;padding:0;margin:18px 0}.checks li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #26364b}.val{margin-left:auto;color:var(--muted)}.timing{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px}.track{height:5px;flex:1;background:#26364b;border-radius:8px}.track i{display:block;height:100%;background:var(--blue);width:0}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.admin-grid label{display:grid;gap:6px;color:var(--muted);font-size:12px}.admin-grid input{width:100%}.hidden-compat{display:none!important}
-    @media(max-width:800px){.kiosk{grid-template-columns:1fr;margin:14px}.settings{margin:14px}.bar{padding:0 14px}.nav{gap:9px}.nav a{font-size:11px}.brand span{display:none}}
-  </style>
-</head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424"><title>SpoofGate | Campus Access</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+:root{color-scheme:dark;--bg:#0a1220;--panel:#111d30;--line:#263750;--muted:#9aabc1;--ink:#eef4ff;--blue:#4d91f7;--green:#36c995;--red:#f47780;--amber:#f3bd5d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0,#1b3457 0,transparent 42%),var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+.bar{min-height:68px;padding:12px max(20px,calc((100% - 1160px)/2));display:flex;align-items:center;gap:22px;border-bottom:1px solid var(--line);background:#0a1220e8}
+.brand{display:flex;gap:10px;align-items:center;color:var(--ink);text-decoration:none}.brand strong{font-size:20px}.brand span{color:var(--muted);font-size:12px}.nav{display:flex;gap:16px;margin-left:auto}.nav a{color:var(--muted);text-decoration:none;font-size:13px}
+.pill,.dot{border:1px solid var(--line);border-radius:99px;padding:5px 10px;color:var(--muted);font-size:12px}
+.settings{max-width:1160px;margin:20px auto;padding:15px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:15px}
+.field{display:grid;gap:5px;color:var(--muted);font-size:12px}select,input{background:#0b1627;color:var(--ink);border:1px solid #354966;border-radius:8px;padding:9px;font:inherit}.seg{display:flex;gap:5px;align-items:center}.seg button,.btn{background:#1b2b43;color:var(--ink);border:1px solid #354966;border-radius:9px;padding:9px 12px;cursor:pointer}.seg button[aria-pressed=true],.primary{background:#225fba;border-color:#4d91f7}.btn:disabled{opacity:.45;cursor:not-allowed}.switch{display:flex;gap:8px;align-items:center}
+.kiosk{max-width:1160px;margin:20px auto 50px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.reader,.result,.panel{background:linear-gradient(155deg,#14243b,#101a2a);border:1px solid var(--line);border-radius:17px;padding:21px;min-width:0}
+.lens{position:relative;overflow:hidden;background:#050b14;border-radius:13px;aspect-ratio:4/3}.feed,video{width:100%;height:100%;object-fit:cover}.oval{position:absolute;inset:12% 27%;border:2px solid #72b4ff;border-radius:48%;box-shadow:0 0 0 999px #06101a66;pointer-events:none}.over{position:absolute;inset:0;background:#08111eee;padding:22px}.go{width:100%;margin-top:12px;padding:13px}.hint,.muted,.why{color:var(--muted)}.verdict{padding:18px;background:#0b1626;border:1px solid var(--line);border-radius:13px}.state{font-size:12px;color:var(--blue);letter-spacing:1px}.verdict h1{font-size:25px;margin:7px 0}.checks{list-style:none;padding:0;margin:16px 0}.checks li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #263750}.checks .val{margin-left:auto;color:var(--muted)}.timing{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px}.track{height:5px;flex:1;background:#263750;border-radius:8px}.track i{display:block;height:100%;background:var(--blue);width:0}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.admin-grid label{display:grid;gap:6px;color:var(--muted);font-size:12px}.admin-grid input{width:100%}.next,.queue{margin-top:15px;padding:14px;border:1px solid var(--line);border-radius:12px}.row{display:flex;gap:8px;flex-wrap:wrap}.err{color:var(--red)}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#20334e;padding:10px 18px;border-radius:10px;display:none}.on{display:block!important}
+@media(max-width:800px){.kiosk{grid-template-columns:1fr;margin:14px}.settings{margin:14px}.bar{padding:12px 14px;flex-wrap:wrap}.nav{gap:9px}.nav a{font-size:11px}}
+</style></head>
 <body class="theme-kiosk">
-<header class="bar">
-  <a class="brand" href="/"><strong>◈ SpoofGate</strong><span id="where">Campus access control</span></a>
-  <nav class="nav"><a href="/" aria-current="page">Kiosk</a><a href="#institution" id="btn-admin">Institution</a></nav>
-  <span class="dot" id="engine-dot">Connecting</span>
-</header>
-<section class="settings">
-  <span class="label">DEMO CONTROLS</span>
-  <label class="field">Access zone<select id="zone"><option value="campus_gate">Main campus gate</option><option value="lab_cse">AI Lab (CSE)</option><option value="server_room">Server room</option></select></label>
-  <div class="field">Policy clock<div class="seg"><button type="button" data-time="" aria-pressed="true">Live</button><button type="button" data-time="11:30" aria-pressed="false">11:30</button><button type="button" data-time="23:15" aria-pressed="false">23:15</button><input type="time" id="time-custom"></div></div>
-  <label class="field">Offline demo <span class="switch"><input type="checkbox" id="offline-toggle"><span id="offline-label">Connected</span></span></label>
-  <div id="setup" class="setup">Connecting to verification service…</div>
-</section>
+<header class="bar"><a class="brand" href="/"><strong>◈ SpoofGate</strong><span id="where">Campus access control</span></a><nav class="nav"><a href="/" aria-current="page">Kiosk</a><a href="#admin" id="btn-admin">Institution</a><a href="/docs">API</a></nav><span class="pill" id="pill-engine"><span id="engine-dot">Connecting</span></span></header>
+<section class="settings"><strong>DEMO CONTROLS</strong>
+<label class="field">Access zone<select id="zone"><option value="campus_gate">Main campus gate</option><option value="lab_cse">AI Lab (CSE)</option><option value="server_room">Server room</option></select></label>
+<div class="field">Policy clock<div class="seg"><button type="button" data-time="" aria-pressed="true">Live</button><button type="button" data-time="11:30" aria-pressed="false">11:30</button><button type="button" data-time="23:15" aria-pressed="false">23:15</button><input type="time" id="time-custom"></div></div>
+<label class="field">Offline mode<span class="switch"><input type="checkbox" id="offline-toggle"><span id="offline-label">Connected</span></span></label>
+<div id="setup" class="muted">Connecting to verification engine…</div></section>
+<div id="offline-banner" hidden><span id="offline-text"></span></div>
 <main class="kiosk">
-  <section class="reader" id="cam">
-    <h2>Identity capture</h2>
-    <div class="lens" id="lens"><div class="feed"><video id="video" playsinline muted autoplay></video><div class="oval"></div><div id="flash"></div><div id="shutter"></div><span id="edge" hidden>Offline</span><div class="over" id="cam-msg" hidden><h3 id="cam-msg-title">Camera unavailable</h3><p id="cam-msg-text"></p><button class="btn" id="cam-retry" type="button">Retry camera</button></div></div></div>
-    <div id="cam-meta" class="muted">Waiting for camera…</div>
-    <button class="btn primary go" id="btn-verify" type="button" disabled><span id="verify-text">Starting camera</span></button>
-    <button class="btn" id="btn-recapture" type="button">Recapture / retry</button>
-    <p class="hint">Position one face inside the oval. Verification captures a short burst for quality, liveness and identity checks.</p>
-    <div class="muted">Capture time: <strong id="watch">—</strong></div>
-  </section>
-  <section class="result">
-    <div class="verdict" id="hero"><div class="state" id="hero-kicker">READY</div><h1 id="hero-title">Welcome to SpoofGate</h1><p class="why" id="hero-sub">Look at the camera to begin verification.</p><span id="hero-code"></span><span id="hero-icon"></span></div>
-    <div id="verdict" hidden><span id="v-state"></span><h1 id="v-title"></h1><p id="v-why"></p></div>
-    <h2 style="margin-top:20px">Verification trace</h2>
-    <ol class="checks" id="trace"><li data-k="capture"><i>○</i> Capture</li><li data-k="quality"><i>○</i> Image quality</li><li data-k="liveness"><i>○</i> Liveness</li><li data-k="identity"><i>○</i> Identity match</li><li data-k="policy"><i>○</i> Campus policy</li></ol>
-    <div class="checks"><div>Decision latency <strong id="lat-total">—</strong></div><div>Live score <strong id="live-val">—</strong></div><div>Identity <strong id="id-user">—</strong></div><div>Zone <strong id="pol-zone">—</strong></div><div id="lat-break"></div><div id="sla-fill"></div><div id="live-note"></div></div>
-    <div id="next" hidden><h3 id="n-title"></h3><p id="n-text"></p><div id="n-actions"></div><div id="n-code"><input id="otp"><button id="btn-otp">Submit code</button></div><p id="step-err"></p><p id="otp-demo"></p><button id="btn-action">Complete action check</button><button id="btn-otp-demo">Demo OTP</button><button id="btn-recapture">Recapture</button></div>
-    <div id="step" hidden><h3 id="step-title"></h3><p id="step-text"></p><p id="step-err"></p><input id="otp"><button id="btn-otp">Verify code</button><button id="btn-action">Head-turn check</button><button id="btn-otp-demo">Show demo code</button><button id="step-recapture">Retry</button><p id="otp-demo"></p></div>
-    <div id="queue" hidden><span id="queue-count">0</span> pending offline events <button id="btn-sync">Sync</button></div>
-    <div id="audit"></div>
-  </section>
-</main>
-<dialog id="admin" style="background:#111c2e;color:#eef4ff;border:1px solid #344761;border-radius:16px;max-width:760px;width:90%">
-  <h2>Institution dashboard</h2><button class="btn" onclick="document.getElementById('admin').close()">Close</button>
-  <div class="admin-grid">
-    <label>Student ID to enroll<input id="enroll-id" placeholder="e.g. student-001"></label><div><button class="btn primary" id="btn-enroll">Enroll from camera</button><p id="enroll-msg"></p></div>
-    <label>Student ID to revoke<select id="revoke-id"></select></label><div><button class="btn" id="btn-revoke">Revoke identity</button><p id="revoke-msg"></p></div>
-  </div>
-  <h3>System diagnostics</h3><dl id="health-kv"></dl><p id="stats-body"></p><p id="summary"></p><button class="btn" id="btn-stats">Refresh stats</button>
-</dialog>
-<div id="toast" role="status" style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#20334e;padding:10px 18px;border-radius:10px;display:none"></div>
-<div class="hidden-compat" aria-hidden="true">
-  <span id="r-live"></span><span id="r-sim"></span><span id="btn-sync"></span><span id="offline-banner"></span><span id="offline-text"></span><span id="cam-badge"></span><span id="pol-kv"></span><span id="step-otp"></span><span id="step-action"></span><span id="step-recapture"></span><span id="n-wait"></span><span id="n-wait-text"></span><span id="n-err"></span><span id="q-count"></span><span id="t-fill"></span><span id="t-total"></span><span id="t-parts"></span><span id="timing"></span><span id="offline-note"></span><span id="offline-rule-text"></span><span id="edge"></span><span id="shutter"></span><span id="pol-zone"></span><span id="id-user"></span><span id="live-val"></span><span id="lat-break"></span><span id="sla-fill"></span><span id="lat-total"></span><span id="label"></span><input id="claimed"><span id="scenario"></span><span id="cam-over"></span><span id="cam-error"></span><span id="flash"></span><span id="btn-sync"></span><span id="offline-toggle"></span><span id="btn-recapture"></span><span id="btn-otp"></span><span id="btn-action"></span><span id="btn-otp-demo"></span><span id="btn-admin"></span><span id="btn-enroll"></span><span id="btn-revoke"></span><span id="btn-stats"></span><span id="admin"></span><span id="audit"></span><span id="queue-count"></span><span id="stats-body"></span><span id="summary"></span><span id="enroll-id"></span><span id="enroll-msg"></span><span id="revoke-id"></span><span id="revoke-msg"></span><span id="health-kv"></span><span id="live-note"></span><span id="step-err"></span><span id="otp-demo"></span><span id="watch"></span><span id="cam"></span><span id="hero"></span><span id="hero-kicker"></span><span id="hero-title"></span><span id="hero-sub"></span><span id="hero-code"></span><span id="hero-icon"></span><span id="trace"></span><span id="lat-total"></span><span id="lat-break"></span><span id="sla-fill"></span><span id="id-user"></span><span id="pol-zone"></span><span id="pol-kv"></span><span id="offline-text"></span><span id="cam-meta"></span><span id="cam-msg"></span><span id="cam-msg-title"></span><span id="cam-msg-text"></span><span id="btn-verify"></span><span id="verify-text"></span><span id="otp"></span><span id="step"></span><span id="step-title"></span><span id="step-text"></span><span id="step-err"></span><span id="step-recapture"></span><span id="step-otp"></span><span id="step-action"></span><span id="n-title"></span><span id="n-text"></span><span id="n-actions"></span><span id="n-code"></span><span id="n-err"></span><span id="n-wait"></span><span id="n-wait-text"></span><span id="r-live"></span><span id="r-sim"></span><span id="offline"></span><span id="sync"></span>
-</div>
-<script src="/app.js" defer></script>
-</body></html>
+<section class="reader" id="cam"><h2>Identity capture</h2><div class="lens" id="lens"><div class="feed"><video id="video" playsinline muted autoplay></video><div class="oval"></div><div id="flash"></div><div id="shutter"></div><span id="edge" hidden>Offline</span><div class="over" id="cam-msg" hidden><h3 id="cam-msg-title">Camera unavailable</h3><p id="cam-msg-text"></p><button class="btn" id="cam-retry" type="button">Retry camera</button></div></div></div>
+<div class="muted" id="cam-meta">Waiting for camera…</div><button class="btn primary go" id="btn-verify" type="button" disabled><span id="verify-text">Starting camera</span></button><button class="btn" id="btn-recapture" type="button">Recapture</button><p class="hint">Position one face inside the oval, then verify.</p><div>Elapsed: <strong id="watch">—</strong></div><div id="cam-badge"></div><div id="cam-over" hidden><p id="cam-error"></p></div></section>
+<section class="result"><div class="verdict" id="hero"><div class="state" id="hero-kicker">READY</div><h1 id="hero-title">Welcome to SpoofGate</h1><p class="why" id="hero-sub">Look at the camera to begin.</p><span id="hero-code"></span><span id="hero-icon"></span></div>
+<div id="verdict" hidden><span id="v-state"></span><h1 id="v-title"></h1><p id="v-why"></p></div>
+<h3>Verification trace</h3><ol class="checks" id="trace"><li data-k="capture"><i>○</i> Capture</li><li data-k="quality"><i>○</i> Quality</li><li data-k="liveness"><i>○</i> Liveness</li><li data-k="identity"><i>○</i> Identity</li><li data-k="policy"><i>○</i> Campus policy</li></ol>
+<div class="checks"><div>Decision latency <strong id="lat-total">—</strong></div><div>Live score <strong id="live-val">—</strong></div><div>Identity <strong id="id-user">—</strong></div><div>Zone <strong id="pol-zone">—</strong></div><div id="lat-break"></div><div id="sla-fill"></div><div id="live-note"></div><div id="pol-kv"></div></div>
+<div id="next" class="next" hidden><h3 id="n-title"></h3><p id="n-text"></p><div id="n-actions" class="row"></div><div id="n-code" class="row" hidden><input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button class="btn primary" id="btn-otp">Submit code</button></div><p id="step-err" class="err"></p><p id="otp-demo"></p><button class="btn" id="btn-action">Head-turn check</button><button class="btn" id="btn-otp-demo">Demo code</button><button class="btn" id="step-recapture">Recapture</button><h4 id="step-title"></h4><p id="step-text"></p><button id="step-otp" hidden></button><button id="step-action" hidden></button></div>
+<div id="queue" class="queue" hidden><span id="queue-count">0</span> pending offline decisions <button class="btn" id="btn-sync">Sync</button><span id="q-count"></span><button id="sync" hidden></button></div>
+<div id="audit"></div><div id="offline-note" hidden><span id="offline-rule-text"></span></div><div id="stats-body"></div><div id="summary"></div></section></main>
+<dialog id="admin" style="background:#111d30;color:#eef4ff;border:1px solid #354966;border-radius:16px;max-width:760px;width:92%;padding:24px"><h2>Institution dashboard</h2><button class="btn" type="button" onclick="document.getElementById('admin').close()">Close</button>
+<div class="admin-grid"><label>Student ID<input id="enroll-id" placeholder="student-001"></label><div><button class="btn primary" id="btn-enroll" type="button">Enroll face</button><p id="enroll-msg"></p></div><label>Revoke student<select id="revoke-id"></select></label><div><button class="btn" id="btn-revoke" type="button">Revoke identity</button><p id="revoke-msg"></p></div></div><h3>System diagnostics</h3><dl id="health-kv"></dl><button class="btn" id="btn-stats" type="button">Refresh statistics</button></dialog>
+<div id="toast" role="status"></div>
+<div hidden aria-hidden="true"><span id="r-live"></span><span id="r-sim"></span><span id="label"></span><input id="claimed"><span id="btn-sync-placeholder"></span><span id="offline"></span><span id="cam-meta-placeholder"></span><span id="n-wait"></span><span id="n-wait-text"></span><span id="n-err"></span><span id="t-fill"></span><span id="t-total"></span><span id="t-parts"></span><span id="timing"></span><span id="offline-rule-text-placeholder"></span><span id="edge-placeholder"></span></div>
+<script src="/app.js" defer></script></body></html>
