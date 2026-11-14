@@ -177,6 +177,7 @@ async function heartbeat() {
 
 function setPill(id, cls, text) {
   const p = $(id);
+  if (!p) return;
   p.className = 'pill ' + cls;
   p.querySelector('span').textContent = text;
 }
@@ -693,7 +694,7 @@ function init() {
   $('zone').addEventListener('change', () => { hideStep(); setHero('idle', 'READY', 'Step into the frame', `Zone: ${ZONES[$('zone').value]}`); });
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
-    if (e.code === 'Space' && !['input', 'select', 'textarea', 'button'].includes(tag) && !$('admin').open) {
+    if (e.code === 'Space' && !['input', 'select', 'textarea', 'button'].includes(tag) && (!$('admin') || !$('admin').open)) {
       e.preventDefault(); verify();
     }
   });
